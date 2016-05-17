@@ -1,4 +1,3 @@
-
 import java.util.List;
 
 /**
@@ -6,6 +5,6 @@ import java.util.List;
  */
 public interface ParsePart {
 
-    public void parse(List<Partition.PartitionField>parts, String input);
+    public void parse(List<Partition.PartitionField> parts, String input);
     public String toString(Partition p);
 }

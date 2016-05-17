@@ -1,4 +1,7 @@
-import java.sql.*;
+import org.apache.log4j.Logger;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -6,13 +9,15 @@ import java.util.List;
  */
 public class LoadMain {
 
-	public static void main(String[] args) throws Exception {
-		try {
-			String url = "jdbc:hive2://10.73.50.24:21050/;auth=noSasl";
-			Connection db = HiveDB.connectDB(url);
-			String schema = ImpalaDB.getSchema("postgres", "postgres_avant_basic_us_payment_transactions_1", db);
-			ImpalaDB.createPartitionTable("postgres_refined", "avant_basic_jtest", db, schema, "part_date int", "parquet");
-			List<Partition> parts = ImpalaDB.getPartitions(db, "select distinct(substr(updated_at, 1, 10)) as part  from postgres.postgres_avant_basic_us_payment_transactions_1 order by part desc limit 1", new ParsePart() {
+    final static Logger logger = Logger.getLogger(LoadMain.class);
+
+    public static void main(String[] args) throws Exception {
+        try {
+            String url = "jdbc:hive2://10.73.50.24:21050/;auth=noSasl";
+            Connection db = HiveDB.connectDB(url);
+            String schema = ImpalaDB.getSchema("postgres", "postgres_avant_basic_us_payment_transactions_1", db);
+            ImpalaDB.createPartitionTable("postgres_refined", "avant_basic_jtest", db, schema, "part_date int", "parquet");
+            List<Partition> parts = ImpalaDB.getPartitions(db, "select distinct(substr(updated_at, 1, 10)) as part  from postgres.postgres_avant_basic_us_payment_transactions_1 order by part desc limit 1", new ParsePart() {
                 public void parse(List<Partition.PartitionField> part, String input) {
                     Partition.PartitionField<Integer> partDate = new Partition().new PartitionField<Integer>();
                     partDate.fieldName = "part_date";
@@ -21,41 +26,35 @@ public class LoadMain {
                     part.add(partDate);
                     return;
                 }
-                public String toString(Partition p)
-                {
+
+                public String toString(Partition p) {
                     return "";
                 }
 
             });
-			int ret = ImpalaDB.updatePartitions(db, parts, "postgres", "postgres_avant_basic_us_payment_transactions_1", "postgres_refined", "avant_basic_jtest", new ParsePart() {
+            ImpalaDB.updatePartitions(db, parts, "postgres", "postgres_avant_basic_us_payment_transactions_1", "postgres_refined", "avant_basic_jtest", new ParsePart() {
                 public void parse(List<Partition.PartitionField> parts, String input) {
                     return;
                 }
 
                 public String toString(Partition p) {
                     String result = "";
-                    for (Partition.PartitionField field: p.partFields)
-                    {
-                        //result += field.fieldValue.toString() + "-";
+                    for (Partition.PartitionField field : p.partFields) {
                         result = field.fieldString;
                     }
-                    //TODO: remove last '-'
-                    //return result.substring(0, result.length()-1);
                     return result;
 
                 }
             });
 
-            System.out.println(ret);
-		}
-		catch (SQLException e)
-		{
+        } catch (SQLException e) {
             e.printStackTrace();
+            logger.fatal("A sql exception is thrown, aborting the process.. " + e.getMessage());
             System.exit(1);
 
-		}
+        }
 
-	}
+    }
 
 }
 
