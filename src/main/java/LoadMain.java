@@ -1,5 +1,6 @@
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -26,35 +27,41 @@ public class LoadMain {
                     part.add(partDate);
                     return;
                 }
-
                 public String toString(Partition p) {
                     return "";
                 }
-
             });
+            LockFile lock = new LockFile("/user/jing/lock", "postgres_refined", "postgres_avant_basic_us_payment_transactions_1");
+            if (!lock.acquireLock()) {
+                throw new IOException("can't aquire lock file" + lock.toString());
+            }
             ImpalaDB.updatePartitions(db, parts, "postgres", "postgres_avant_basic_us_payment_transactions_1", "postgres_refined", "avant_basic_jtest", new ParsePart() {
                 public void parse(List<Partition.PartitionField> parts, String input) {
                     return;
                 }
-
                 public String toString(Partition p) {
                     String result = "";
                     for (Partition.PartitionField field : p.partFields) {
                         result = field.fieldString;
                     }
                     return result;
-
                 }
             });
+            if (!lock.releaseLock()) {
+                throw new IOException("can't release lock file" + lock.toString());
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
             logger.fatal("A sql exception is thrown, aborting the process.. " + e.getMessage());
             System.exit(1);
 
-        }
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.fatal(e.getMessage());
+            System.exit(1);
 
+        }
     }
 
 }
-

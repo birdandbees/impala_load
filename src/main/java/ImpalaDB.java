@@ -58,8 +58,9 @@ public class ImpalaDB {
     public static void updatePartitions(Connection db, List<Partition> parts,
                                         String sourceDB, String sourceTable,
                                         String targetDB, String targetTable, ParsePart parseMethod)
-            throws SQLException {
+            throws SQLException, InterruptedException {
         for (Partition part : parts) {
+            logger.info("build partition " + part.serializeValue(parseMethod));
             StringBuilder sql = new StringBuilder();
             sql.append("insert into ");
             sql.append(targetDB);
@@ -76,6 +77,7 @@ public class ImpalaDB {
             sql.append("\'");
             logger.debug(sql.toString());
             HiveDB.execUpdate(db, sql.toString());
+            Thread.sleep(5);
         }
         return;
     }
