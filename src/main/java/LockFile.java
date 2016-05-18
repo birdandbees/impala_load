@@ -13,6 +13,7 @@ public class LockFile {
 
     public LockFile(String dir, String db, String table) throws IOException {
         Configuration conf = new Configuration();
+        conf.set("fs.defaultFS", "hdfs://10.73.48.255:7222/");
         fs = FileSystem.get(conf);
         lock = new Path(dir + "/" + db + "/" + table);
     }

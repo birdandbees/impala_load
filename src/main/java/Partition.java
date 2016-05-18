@@ -19,7 +19,7 @@ public class Partition {
 
     public void fill(ParsePart parseMethod, String input) {
         partFields = new ArrayList<PartitionField>();
-        parseMethod.parse((List) partFields, input);
+        parseMethod.parse(this, input);
     }
 
     public String serialize() {

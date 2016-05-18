@@ -57,10 +57,10 @@ public class ImpalaDB {
 
     public static void updatePartitions(Connection db, List<Partition> parts,
                                         String sourceDB, String sourceTable,
-                                        String targetDB, String targetTable, ParsePart parseMethod)
+                                        String targetDB, String targetTable, ParsePart stringfy)
             throws SQLException, InterruptedException {
         for (Partition part : parts) {
-            logger.info("build partition " + part.serializeValue(parseMethod));
+            logger.info("build partition " + part.serializeValue(stringfy));
             StringBuilder sql = new StringBuilder();
             sql.append("insert into ");
             sql.append(targetDB);
@@ -73,7 +73,7 @@ public class ImpalaDB {
             sql.append(".");
             sql.append(sourceTable);
             sql.append(" where substr(updated_at, 1, 10) =\'");
-            sql.append(part.serializeValue(parseMethod));
+            sql.append(part.serializeValue(stringfy));
             sql.append("\'");
             logger.debug(sql.toString());
             HiveDB.execUpdate(db, sql.toString());
